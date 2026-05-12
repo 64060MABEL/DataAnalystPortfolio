@@ -1,125 +1,135 @@
-Select * from [Portfolio projects]..CovidDeaths
-order by 3,4;
+ /*
 
---Select * from [Portfolio projects]..CovidVaccinations
---order by 3,4;
+ Cleaning Data in sql queries
 
---Data Exploration
-Select location,date,total_cases,new_cases,total_deaths,population
-From [Portfolio projects]..CovidDeaths
-where continent is not null
-order by 1,2
+ */
+ 
+ Select * From [Portfolio projects].[dbo].[NashvilleHousing]
+ -----------------------------------------------------------------------
+ -- Standardize Date Format
 
---Looking at Total cases and Total Deaths
---Shows the likelihood of dying if you contract covid in your country
-Select location,date,total_cases,total_deaths,(total_deaths/total_cases)*100 as DeathPercentage
-From [Portfolio projects]..CovidDeaths
-Where location like '%india%' and  continent is not null
-order by 1,2
+ Select SaleDateConverted,CONVERT ( Date,SaleDate)
+ From [Portfolio projects].[dbo].[NashvilleHousing]
 
---Looking at the total cases vs population
---Shows what percentage of population got Covid
-Select location,date,population,total_cases,(total_cases/population)*100 as PercentPopulationInfected
-From [Portfolio projects]..CovidDeaths
-Where location like '%india%' and  continent is not null
-order by 1,2
+ Alter Table NashvilleHousing
+ Add SaleDateConverted Date;
 
---Looking at countries with highest infection rate compared to population
-Select location,population,Max(total_cases) as HighestInfectionCount,Max(total_cases/population)*100 as 
-PercentPopulationInfected
-From [Portfolio projects]..CovidDeaths
-where continent is not null
---Where location like '%india%'
-group by location,population
-order by PercentPopulationInfected desc
+ Update NashvilleHousing
+ Set SaleDateConverted = Convert(Date,SaleDate) -- can remove sale date later
 
---Showing Countries with Highest Death count per population 
---nvarchar255 total deaths  is an issue with the data type annd so we caste it as a numeric
---continent has asia and location has asia so we can add where continent is not null
+ -----------------------------------------------------------------------------
+ -- populate property address data
+Select PropertyAddress
+From [Portfolio projects].[dbo].[NashvilleHousing]
 
+-- Performing a self join using col unique id and parcel id
+Select a.ParcelID, a.PropertyAddress, b.ParcelID, b.propertyAddress, ISNULL(a.PropertyAddress,b.PropertyAddress)
+From [Portfolio projects].[dbo].[NashvilleHousing] a
+JOIN [Portfolio projects].[dbo].[NashvilleHousing] b
+on a.ParcelID = b.ParcelID
+and a.[UniqueID ] <> b.[UniqueID ]
+where a.PropertyAddress is Null
 
-Select location, MAX(cast(total_deaths as int)) as TotalDeathCount
-From [Portfolio projects]..CovidDeaths
-where continent is not null
-group by location
-order by TotalDeathCount desc
+Update a 
+Set PropertyAddress = ISNULL(a.PropertyAddress,b.PropertyAddress)
+From [Portfolio projects].[dbo].[NashvilleHousing] a
+JOIN [Portfolio projects].[dbo].[NashvilleHousing] b
+on a.ParcelID = b.ParcelID
+and a.[UniqueID ] <> b.[UniqueID ]
+where a.PropertyAddress is Null
 
+----------------------------------------------------------------------------
+-- Breaking out Address into Individual columns(Address, City, State
+Select substring (propertyAddress,1,CHARINDEX(',',PropertyAddress) -1) as Address
+, SUBSTRING(PropertyAddress,CHARINDEX(',',propertyAddress)+ 1,LEN(PropertyAddress)) as Address
+From [Portfolio projects].[dbo].[NashvilleHousing] 
 
---Lets break things down by continent
---Showing continents with highest death count per population
-Select continent, MAX(cast(total_deaths as int)) as TotalDeathCount
-From [Portfolio projects]..CovidDeaths
-where continent is  not null
-group by continent
-order by TotalDeathCount desc
+Alter Table [Portfolio projects].[dbo].[NashvilleHousing] 
+Add PropertySplitAdress Nvarchar(255)
 
---Global numbers
-Select SUM(new_cases) as total_cases, SUM(cast(new_deaths as int)) as total_deaths, SUM(cast (new_deaths as int))/SUM(New_cases)*100 as DeathPercentage
--- whenever ncarchar using cast
-From [Portfolio projects]..CovidDeaths
-where continent is not null
-order by 1,2 
+Update [Portfolio projects].[dbo].[NashvilleHousing] 
+Set PropertySplitAdress = SUBSTRING(PropertyAddress, 1, Charindex(',',PropertyAddress)-1)
 
---Total Populations Vs Vaccinations
-Select dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations
---,SUM(convert(int,vac.new_vaccinations)) OVER (partition by dea.location)
-,SUM(CAST(vac.new_vaccinations as int)) OVER (partition by dea.location order by dea.location, dea.date) as RollingPeopleVaccinated 
-From [Portfolio projects]..CovidDeaths dea
-Join [Portfolio projects]..CovidVaccinations vac
-On dea.location = vac.location
-and dea.date = vac.date
-where dea.continent is not null
-order by 2,3
+Alter Table [Portfolio projects].[dbo].[NashvilleHousing] 
+Add PropertySplitCity Nvarchar(255);
 
--- USE CTE
-WITH PopvsVac (continent,location,date,population,new_vaccinations,RollingPeopleVaccinated)
-as
-(Select dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations
---,SUM(convert(int,vac.new_vaccinations)) OVER (partition by dea.location)
-,SUM(CAST(vac.new_vaccinations as int)) OVER (partition by dea.location order by dea.location, dea.date) as RollingPeopleVaccinated 
-From [Portfolio projects]..CovidDeaths dea
-Join [Portfolio projects]..CovidVaccinations vac
-On dea.location = vac.location
-and dea.date = vac.date
-where dea.continent is not null)
---order by 2,3 
-Select * , (RollingPeopleVaccinated/Population)*100 
-From PopVsVac
+Update [Portfolio projects].[dbo].[NashvilleHousing] 
+SET PropertySplitCity = SUBSTRING(PropertyAddress,CHARINDEX(',',propertyAddress)+ 1,LEN(PropertyAddress))
 
---TEMP TABLE
-DROP Table if exists #PercentPopulationVaccinated
-Create Table #PercentPopulationVaccinated
-(
-Continent nvarchar(255),
-Location nvarchar(255),
-Date datetime,
-population numeric,
-New_vaccinations numeric,
-RollingPeopleVaccinated numeric
+Select *  From [Portfolio projects].[dbo].[NashvilleHousing] 
+
+Select
+PARSENAME(REPLACE(OwnerAddress,',','.'),3)
+,PARSENAME(REPLACE(OwnerAddress,',','.') , 2)
+,PARSENAME(REPLACE(OwnerAddress,',','.'), 3)
+From [Portfolio projects].[dbo].[NashvilleHousing] 
+
+Alter Table [Portfolio projects].[dbo].[NashvilleHousing] -- 1
+Add OwnerSplitAd Nvarchar(255);
+
+Update [Portfolio projects].[dbo].[NashvilleHousing] 
+Set OwnerSplitAd = PARSENAME(Replace (OwnerAddress,',','.'),3)
+
+Alter Table [Portfolio projects].[dbo].[NashvilleHousing]
+Add OwnerSplitCity Nvarchar(255);
+
+Update [Portfolio projects].[dbo].[NashvilleHousing]
+SET OwnerSplitCity = PARSENAME(Replace (OwnerAddress,',','.'),2)
+
+Alter Table [Portfolio projects].[dbo].[NashvilleHousing]
+Add OwnerSplitState Nvarchar(255);
+
+Update [Portfolio projects].[dbo].[NashvilleHousing]
+SET OwnerSplitState = PARSENAME(Replace (OwnerAddress,',','.'),1) -- This is very important and is used Frequently.
+
+Select * from [Portfolio projects].[dbo].[NashvilleHousing];
+
+--------------------------------------------------------------------------------------------------------------------
+-- Change Y and N to Yes and No in "sold as Vacant" field
+Select Distinct (Soldasvacant), Count(Soldasvacant)
+From [Portfolio projects].[dbo].[NashvilleHousing]
+Group by SoldAsVacant
+order by 2
+
+Select SoldasVacant
+, Case when SoldasVacant = 'Y' Then 'Yes'
+  When SoldasVacant = 'N' Then 'No'
+  Else SoldasVacant
+  End
+ From [Portfolio projects].[dbo].[NashvilleHousing]
+
+Update [Portfolio projects].[dbo].[NashvilleHousing]
+Set SoldasVacant =  Case when SoldasVacant = 'Y' Then 'Yes'
+When SoldasVacant = 'N' Then 'No'
+Else SoldasVacant
+end
+
+---------------------------------------------------------------------------------------------------
+-- Remove Duplicates
+-- Can use other options like rank, row number.
+With RowNumCTE as (Select *,
+ROW_NUMBER() over (
+Partition by parcelID,
+			PropertyAddress,
+			SalePrice,
+			SaleDate,
+			LegalReference
+			Order by
+			UniqueId
+			)row_num
+From [Portfolio projects].[dbo].[NashvilleHousing]
+--Orderby parcelid
 )
-Insert into #PercentPopulationVaccinated
-Select dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations
---,SUM(convert(int,vac.new_vaccinations)) OVER (partition by dea.location)
-,SUM(CAST(vac.new_vaccinations as int)) OVER (partition by dea.location order by dea.location, dea.date) as RollingPeopleVaccinated 
-From [Portfolio projects]..CovidDeaths dea
-Join [Portfolio projects]..CovidVaccinations vac
-On dea.location = vac.location
-and dea.date = vac.date
-where dea.continent is not null
-Select * , (RollingPeopleVaccinated/Population)*100 
-From #PercentPopulationVaccinated
+Select *  From RowNumCTE
+Where row_num > 1
+Order by PropertyAddress -- Used delete to remove dup records
 
---See and try to create many views 
--- Next is tableau public
--- creating View to store data for later vizualizations
---Create View
-Create View PercentPopulationVaccinated as 
-Select dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations
---,SUM(convert(int,vac.new_vaccinations)) OVER (partition by dea.location)
-,SUM(CAST(vac.new_vaccinations as int)) OVER (partition by dea.location order by dea.location, dea.date) as RollingPeopleVaccinated 
-From [Portfolio projects]..CovidDeaths dea
-Join [Portfolio projects]..CovidVaccinations vac
-On dea.location = vac.location
-and dea.date = vac.date
-where dea.continent is not null
---order by 2,3
+----------------------------------------------------------------------------------------------------------------------
+-- Delete Unused Columns
+Select * from [Portfolio projects].[dbo].[NashvilleHousing]
+Alter Table [Portfolio projects].[dbo].[NashvilleHousing]
+Drop Column OwnerAddress,TaxDistrict,PropertyAddress
+
+Alter Table [Portfolio projects].[dbo].[NashvilleHousing]
+Drop Column SaleDate
+
