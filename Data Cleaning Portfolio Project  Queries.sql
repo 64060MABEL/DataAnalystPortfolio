@@ -16,13 +16,14 @@
 
  Update NashvilleHousing
  Set SaleDateConverted = Convert(Date,SaleDate) -- can remove sale date later
-
- -----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
  -- populate property address data
+	 
 Select PropertyAddress
 From [Portfolio projects].[dbo].[NashvilleHousing]
 
 -- Performing a self join using col unique id and parcel id
+	 
 Select a.ParcelID, a.PropertyAddress, b.ParcelID, b.propertyAddress, ISNULL(a.PropertyAddress,b.PropertyAddress)
 From [Portfolio projects].[dbo].[NashvilleHousing] a
 JOIN [Portfolio projects].[dbo].[NashvilleHousing] b
@@ -39,7 +40,8 @@ and a.[UniqueID ] <> b.[UniqueID ]
 where a.PropertyAddress is Null
 
 ----------------------------------------------------------------------------
--- Breaking out Address into Individual columns(Address, City, State
+-- Breaking out Address into Individual columns(Address, City, State)
+	 
 Select substring (propertyAddress,1,CHARINDEX(',',PropertyAddress) -1) as Address
 , SUBSTRING(PropertyAddress,CHARINDEX(',',propertyAddress)+ 1,LEN(PropertyAddress)) as Address
 From [Portfolio projects].[dbo].[NashvilleHousing] 
@@ -86,6 +88,7 @@ Select * from [Portfolio projects].[dbo].[NashvilleHousing];
 
 --------------------------------------------------------------------------------------------------------------------
 -- Change Y and N to Yes and No in "sold as Vacant" field
+
 Select Distinct (Soldasvacant), Count(Soldasvacant)
 From [Portfolio projects].[dbo].[NashvilleHousing]
 Group by SoldAsVacant
@@ -107,6 +110,7 @@ end
 ---------------------------------------------------------------------------------------------------
 -- Remove Duplicates
 -- Can use other options like rank, row number.
+	
 With RowNumCTE as (Select *,
 ROW_NUMBER() over (
 Partition by parcelID,
@@ -126,6 +130,7 @@ Order by PropertyAddress -- Used delete to remove dup records
 
 ----------------------------------------------------------------------------------------------------------------------
 -- Delete Unused Columns
+	
 Select * from [Portfolio projects].[dbo].[NashvilleHousing]
 Alter Table [Portfolio projects].[dbo].[NashvilleHousing]
 Drop Column OwnerAddress,TaxDistrict,PropertyAddress
