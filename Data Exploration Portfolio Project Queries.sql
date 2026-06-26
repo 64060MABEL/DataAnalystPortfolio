@@ -4,6 +4,8 @@
  Data Exploration in sql queries
 
  */
+-- How severe was COVID globally?
+-- First, I calculated the total number of COVID cases and deaths worldwide and then computed the overall death percentage.
 
 --1
 Select SUM(new_cases) as total_cases, SUM(cast(new_deaths as int)) as total_deaths, SUM(cast (new_deaths as int))/SUM(New_cases)*100 as DeathPercentage
