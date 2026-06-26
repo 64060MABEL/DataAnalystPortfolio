@@ -1,12 +1,14 @@
- /*
+
+/*
 
  Cleaning Data in sql queries
 
  */
- 
+ -- Step 1 - Understand the dataset
  Select * From [Portfolio projects].[dbo].[NashvilleHousing]
  -----------------------------------------------------------------------
- -- Standardize Date Format
+-- Step 2 
+-- Standardize Date Format
 
  Select SaleDateConverted,CONVERT ( Date,SaleDate)
  From [Portfolio projects].[dbo].[NashvilleHousing]
@@ -17,7 +19,8 @@
  Update NashvilleHousing
  Set SaleDateConverted = Convert(Date,SaleDate) -- can remove sale date later
 -----------------------------------------------------------------------------
- -- populate property address data
+-- Step 3  
+-- populate property address data using self join
 	 
 Select PropertyAddress
 From [Portfolio projects].[dbo].[NashvilleHousing]
@@ -40,7 +43,8 @@ and a.[UniqueID ] <> b.[UniqueID ]
 where a.PropertyAddress is Null
 
 ----------------------------------------------------------------------------
--- Breaking out Address into Individual columns(Address, City, State)
+-- Step 4 
+-- Breaking out Address into Individual columns(Address, City, State)(Split Address)
 	 
 Select substring (propertyAddress,1,CHARINDEX(',',PropertyAddress) -1) as Address
 , SUBSTRING(PropertyAddress,CHARINDEX(',',propertyAddress)+ 1,LEN(PropertyAddress)) as Address
@@ -87,6 +91,8 @@ SET OwnerSplitState = PARSENAME(Replace (OwnerAddress,',','.'),1) -- This is ver
 Select * from [Portfolio projects].[dbo].[NashvilleHousing];
 
 --------------------------------------------------------------------------------------------------------------------
+-- Step 5 
+-- Standardize the values using case
 -- Change Y and N to Yes and No in "sold as Vacant" field
 
 Select Distinct (Soldasvacant), Count(Soldasvacant)
@@ -108,6 +114,7 @@ Else SoldasVacant
 end
 
 ---------------------------------------------------------------------------------------------------
+-- Step 6
 -- Remove Duplicates
 -- Can use other options like rank, row number.
 	
@@ -129,7 +136,8 @@ Where row_num > 1
 Order by PropertyAddress -- Used delete to remove dup records
 
 ----------------------------------------------------------------------------------------------------------------------
--- Delete Unused Columns
+-- Step 7 
+-- Deleted Unused Columns
 	
 Select * from [Portfolio projects].[dbo].[NashvilleHousing]
 Alter Table [Portfolio projects].[dbo].[NashvilleHousing]
