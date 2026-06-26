@@ -1,5 +1,7 @@
 
- /*
+-- In this project, I analyzed global COVID-19 data to answer business questions rather than clean the data. I calculated global case and death metrics, compared infection rates across countries by normalizing with population, analyzed trends for specific countries like India, examined continent-level impacts, and joined vaccination data to calculate cumulative vaccination progress using window functions. I also created reusable views to support visualization in Tableau."
+
+/*
 
  Data Exploration in sql queries
 
@@ -14,6 +16,9 @@ From [Portfolio projects]..CovidDeaths
 where continent is not null
 order by 1,2 
 
+-- Which countries has the highest deaths?
+-- Using group by
+ 
 --2
 -- We take these out as they are not inluded in the above queries and want to stay consistent
 -- European Union is part of Europe
@@ -26,6 +31,9 @@ and location not in ('World', 'European Union', 'International')
 Group by location
 order by TotalDeathCount desc
 
+-- Which countries has the highest infection rates?
+-- Instead of comparing total cases, we  normalized by population. That means Adjust the numbers based on size  of the population so that countries of diffrent sizes can be compared fairly.
+--thats why we calculate the rate
 --3
 Select Location, Population, MAX(total_cases) as HighestInfectionCount,  Max((total_cases/population))*100 as PercentPopulationInfected
 From [Portfolio projects]..CovidDeaths
@@ -33,6 +41,8 @@ From [Portfolio projects]..CovidDeaths
 Group by Location, Population
 order by PercentPopulationInfected desc
 
+-- How did India's cases change over time?
+ 
 -- 4.
 Select Location, Population,date, MAX(total_cases) as HighestInfectionCount,  Max((total_cases/population))*100 as PercentPopulationInfected
 From [Portfolio projects]..CovidDeaths
@@ -47,7 +57,7 @@ order by 3,4;
 
 --Select * from [Portfolio projects]..CovidVaccinations
 --order by 3,4;
-
+-- which continents where most affected?
 --Data Exploration
 Select location,date,total_cases,new_cases,total_deaths,population
 From [Portfolio projects]..CovidDeaths
@@ -115,6 +125,8 @@ and dea.date = vac.date
 where dea.continent is not null
 order by 2,3
 
+-- How did vaccination campaigns progress?
+-- I created a cumulative vaccination metric to monitor vaccination progress over time for each country.
 -- USE CTE
 WITH PopvsVac (continent,location,date,population,new_vaccinations,RollingPeopleVaccinated)
 as
