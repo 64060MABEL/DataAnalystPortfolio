@@ -1,4 +1,4 @@
-
+-- The objective of this project was to prepare raw housing data for analysis. I standardized date formats, filled missing property addresses using self-joins, split combined address fields into separate columns, standardized categorical values such as 'Y' and 'N' into 'Yes' and 'No', identified duplicate records using ROW_NUMBER(), and removed redundant columns. The final dataset was cleaner, more consistent, and ready for downstream reporting and analytics.
 /*
 
  Cleaning Data in sql queries
