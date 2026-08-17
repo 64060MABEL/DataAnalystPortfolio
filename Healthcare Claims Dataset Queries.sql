@@ -1,4 +1,16 @@
-Select * from dbo.Claims_data$;
+/*
+===============================================================================
+Healthcare Claims & Revenue Leakage Analysis
+===============================================================================
+Description:
+    This SQL script conducts an exploratory data analysis on healthcare claims 
+    to evaluate claim disposition (Denied vs. Paid vs. Under Review), calculate 
+    revenue leakage metrics (recoverable vs. written-off amounts), and categorize 
+    denial reason codes into operational, patient-side, and payer coverage issues.
+
+===============================================================================
+
+*/Select * from dbo.Claims_data$;
 
 -- 1. What % of claims are Denied Vs Paid Vs Under Review?
 Select [Claim Status],
