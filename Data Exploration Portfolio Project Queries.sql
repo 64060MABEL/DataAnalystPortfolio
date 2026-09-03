@@ -1,4 +1,4 @@
-
+-- Data source : https://ourworldindata.org/covid-deaths
 -- In this project, I analyzed global COVID-19 data to answer business questions rather than clean the data. I calculated global case and death metrics, compared infection rates across countries by normalizing with population, analyzed trends for specific countries like India, examined continent-level impacts, and joined vaccination data to calculate cumulative vaccination progress using window functions. I also created reusable views to support visualization in Tableau."
 
 /*
