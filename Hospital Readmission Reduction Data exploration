@@ -1,0 +1,75 @@
+ALTER USER [dbo]
+WITH DEFAULT_SCHEMA = dbo;
+
+SELECT 
+    USER_NAME() AS MyUsername,
+    SCHEMA_NAME() AS MyDefaultSchema;
+
+-- Check the number of records
+Select COUNT(*) as total_rows -- to understand how many records are in the data 
+from Hospital_Readmissions_Reductions
+
+-- check for missing values
+Select 
+sum(case when [Facility ID] is null then 1 else 0 end) as missing_facility_id,
+sum(case when Measure_Name is null then 1 else 0 end) as missing_measure_name,
+sum(case when [Excess Readmission Ratio] is null then 1 else 0 end) as [Excess Readmission Ratio] 
+from Hospital_Readmissions_Reductions
+-- No missing values
+
+-- Check duplicate records
+--Select count (*) , count (distinct[Facility ID]) from Hospital_Readmissions_Reductions 
+--Select [Facility ID],count(*) from  Hospital_Readmissions_Reductions 
+--group by [Facility ID]
+
+
+SELECT
+    [Facility ID],
+    [Measure_Name],
+    COUNT(*) AS Duplicate_Count
+FROM Hospital_Readmissions_Reductions 
+GROUP BY
+    [Facility ID],
+    [Measure_Name]
+HAVING COUNT(*) > 1;
+
+-- D. Check data types
+EXEC sp_help Hospital_Readmissions_Reductions ;
+
+-- ANALYSIS
+--1 : Total Hospitals
+Select count(distinct [Facility ID]) as Total_Hospitals
+from Hospital_Readmissions_Reductions
+
+--2  : Hospitals with higher-than-expected readmissions
+Select 
+[facility Id],
+[State],
+[measure_Name],
+[Excess Readmission Ratio]
+from Hospital_Readmissions_Reductions
+where [Excess Readmission Ratio] > 1
+order by [Excess Readmission Ratio] desc;
+
+--3 : Average excess readmission ratio by condition
+
+Select 
+[measure_Name],
+Round(Avg([Excess Readmission Ratio]),4) as avg_excess_readmission_ratio
+from Hospital_Readmissions_Reductions
+WHERE [Excess Readmission Ratio] IS NOT NULL
+group by [measure_Name]
+order by  avg_excess_readmission_ratio desc
+
+-- 4 : Hospital risk classification
+Select 
+[risk_flag],
+Count(*) total_records
+from Hospital_Readmissions_Reductions
+Group by [risk_flag]
+order by Count(*) desc
+
+
+where [Excess Readmission Ratio] > 1
+group by [State]
+
